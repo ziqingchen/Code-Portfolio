@@ -1,0 +1,217 @@
+#load tidyverse
+library(tidyverse)
+
+#> # A tibble: 6 × 4
+#>       country  year  cases population
+#>                  
+#> 1 Afghanistan  1999    745   19987071
+#> 2 Afghanistan  2000   2666   20595360
+#> 3      Brazil  1999  37737  172006362
+#> 4      Brazil  2000  80488  174504898
+#> 5       China  1999 212258 1272915272
+#> 6       China  2000 213766 1280428583
+
+#> # A tibble: 12 × 4
+#>       country  year       type     count
+#>                     
+#> 1 Afghanistan  1999      cases       745
+#> 2 Afghanistan  1999 population  19987071
+#> 3 Afghanistan  2000      cases      2666
+#> 4 Afghanistan  2000 population  20595360
+#> 5      Brazil  1999      cases     37737
+#> 6      Brazil  1999 population 172006362
+
+#> # A tibble: 6 × 3
+#>       country  year              rate
+#> *                     
+#> 1 Afghanistan  1999      745/19987071
+#> 2 Afghanistan  2000     2666/20595360
+#> 3      Brazil  1999   37737/172006362
+#> 4      Brazil  2000   80488/174504898
+#> 5       China  1999 212258/1272915272
+#> 6       China  2000 213766/1280428583
+
+table4a  # cases
+#> # A tibble: 3 × 3
+#>       country `1999` `2000`
+#> *           
+#> 1 Afghanistan    745   2666
+#> 2      Brazil  37737  80488
+#> 3       China 212258 213766
+table4b  # population
+#> # A tibble: 3 × 3
+#>       country     `1999`     `2000`
+#> *                   
+#> 1 Afghanistan   19987071   20595360
+#> 2      Brazil  172006362  174504898
+#> 3       China 1272915272 1280428583
+
+#extract the number of TB cases per country per year and the matching population per country per year
+#divide cases by population, and multiply by 10000
+countries <- filter(table2, type == 'cases')$country
+years <- filter(table2, type == 'cases')$year
+cases <- filter(table2, type == 'cases')$count
+populations <- filter(table2, type == 'population')$count
+
+table2_rate <- tibble(country = countries,
+                      year = years,
+                      rate = cases/populations * 10000)
+
+table2_rate
+
+## # A tibble: 6 x 3
+##       country  year     rate
+##              
+## 1 Afghanistan  1999 0.372741
+## 2 Afghanistan  2000 1.294466
+## 3      Brazil  1999 2.193930
+## 4      Brazil  2000 4.612363
+## 5       China  1999 1.667495
+## 6       China  2000 1.669488
+
+countries <- table4a$country
+cases_1999 <- table4a$`1999`
+cases_2000 <- table4a$`2000`
+populations_1999 <- table4b$`1999`
+populations_2000 <- table4b$`2000`
+
+table_1999_rate <- tibble(country = countries,
+                          year = 1999,
+                          rate = cases_1999 / populations_1999 * 10000)
+
+table_2000_rate <- tibble(country = countries,
+                          year = 2000,
+                          rate = cases_2000 / populations_2000 * 10000)
+
+table4_rate <- rbind(table_1999_rate, table_2000_rate) %>% arrange(country)
+table4_rate
+
+## # A tibble: 6 x 3
+##       country  year     rate
+##              
+## 1 Afghanistan  1999 0.372741
+## 2 Afghanistan  2000 1.294466
+## 3      Brazil  1999 2.193930
+## 4      Brazil  2000 4.612363
+## 5       China  1999 1.667495
+## 6       China  2000 1.669488
+
+#filter table2 to include only the rows for cases.
+ggplot(data = filter(table2, type == 'cases'),
+       mapping = aes(x = year, y= count)) +
+  geom_line(mapping = aes(group = country),
+            color = 'grey50') +
+  geom_point(mapping = aes(color = country)) + 
+  labs(y = 'cases') +
+  scale_x_continuous(breaks = (c(1999,2000)))
+
+## # A tibble: 4 x 3
+##    half  year return
+##      
+## 1     1  2015   1.88
+## 2     2  2015   0.59
+## 3     1  2016   0.92
+## 4     2  2016   0.17
+
+#Comparing the original stocks and with the maniuplated one
+table4a %>% 
+  gather(`1999`:`2000`, key = "year", value = "cases")
+
+# A tibble: 6 x 3
+##country     year   cases
+##<chr>       <chr>  <int>
+##1 Afghanistan 1999     745
+##2 Brazil      1999   37737
+##3 China       1999  212258
+##4 Afghanistan 2000    2666
+##5 Brazil      2000   80488
+##6 China       2000  213766
+
+people <- tribble(
+  ~name,             ~key,    ~value,
+  #-----------------|--------|------
+  "Phillip Woods",   "age",       45,
+  "Phillip Woods",   "height",   186,
+  "Phillip Woods",   "age",       50,
+  "Jessica Cordero", "age",       37,
+  "Jessica Cordero", "height",   156
+)
+people$id <- c(1, 1, 2, 1, 1)
+people
+
+## # A tibble: 5 x 4
+##              name    key value    id
+##                 
+## 1   Phillip Woods    age    45     1
+## 2   Phillip Woods height   186     1
+## 3   Phillip Woods    age    50     2
+## 4 Jessica Cordero    age    37     1
+## 5 Jessica Cordero height   156     1
+
+people %>% spread(key = "key", value = "value")
+## # A tibble: 3 x 4
+##              name    id   age height
+## *               
+## 1 Jessica Cordero     1    37    156
+## 2   Phillip Woods     1    45    186
+## 3   Phillip Woods     2    50     NA
+
+#Tidy the simple tibble below
+preg <- tribble(
+  ~pregnant, ~male, ~female,
+  "yes",     NA,    10,
+  "no",      20,    12
+)
+
+preg %>%
+  gather(key = 'gender', value = 'value', 2:3, na.rm = TRUE)
+
+## # A tibble: 3 x 3
+##   pregnant gender value
+## *       
+## 1       no   male    20
+## 2      yes female    10
+## 3       no female    12
+
+tibble(x = c("a,b,c", "d,e,f,g", "h,i,j")) %>% 
+  separate(x, c("one", "two", "three"), extra = 'drop')
+
+## # A tibble: 3 x 3
+##     one   two three
+## *   
+## 1     a     b     c
+## 2     d     e     f
+## 3     h     i     j
+
+#merge will only split at most length(into) times
+tibble(x = c("a,b,c", "d,e,f,g", "h,i,j")) %>% 
+  separate(x, c("one", "two", "three"), extra = 'merge')
+
+## # A tibble: 3 x 3
+##     one   two three
+## *   
+## 1     a     b     c
+## 2     d     e   f,g
+## 3     h     i     j
+
+#fill is similar to extra, except it controls what happens if the separated pieces are less than the number of variables defined in into.
+tibble(x = c("a,b,c", "d,e", "f,g,i")) %>% 
+  separate(x, c("one", "two", "three"), fill = 'right')
+
+## # A tibble: 3 x 3
+##     one   two three
+## *   
+## 1     a     b     c
+## 2     d     e  
+## 3     f     g     i
+
+#The option left fills with NAs on the left.
+tibble(x = c("a,b,c", "d,e", "f,g,i")) %>% 
+  separate(x, c("one", "two", "three"), fill = 'left')
+
+## # A tibble: 3 x 3
+##     one   two three
+## *   
+## 1     a     b     c
+## 2       d     e
+## 3     f     g     i
